@@ -21,7 +21,8 @@ class CustomDataset(Dataset):
             if os.path.exists(Xpath) and os.path.exists(ypath):
                 self.data.append([Xpath,ypath])
                 
-        self.img_dim = (250, 250)
+        self.img_dim = (80, 80)
+        self.out_size = (79,79)
 
     def __len__(self):
         return len(self.data)
@@ -31,9 +32,12 @@ class CustomDataset(Dataset):
         Ximg = cv2.imread(bw_path)
         Ximg = cv2.cvtColor(Ximg, cv2.COLOR_BGR2GRAY)
         Ximg = cv2.resize(Ximg, self.img_dim)
-        yimg = cv2.imread(color_path)
-        yimg = cv2.resize(yimg, self.img_dim)
+        #Ximg = Ximg/255
         Ximg_tensor = torch.tensor([Ximg])
+
+        yimg = cv2.imread(color_path)
+        yimg = cv2.resize(yimg, self.out_size)
+        #yimg = yimg/255
         yimg_tensor = torch.tensor(yimg)
-        yimg_tensor = yimg_tensor.permute(2, 0, 1)
+        yimg_tensor = yimg_tensor.permute(2, 1, 0)
         return Ximg_tensor, yimg_tensor
