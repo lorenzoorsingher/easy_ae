@@ -263,7 +263,7 @@ class SimplerAE(nn.Module):
             nn.ReLU()
         )# out [BS, 3, 79, 79]
 
-        self.sig = nn.Sigmoid()
+        #self.sig = nn.Sigmoid()
         
     def forward(self, x):
         x = self.conv1(x)
@@ -271,8 +271,8 @@ class SimplerAE(nn.Module):
         x = self.flat(x)
         x = x.view(x.size(0), 16, 12, 12)
         x = self.trans1(x) 
-        x = self.trans2(x)
-        output = self.sig(x)
+        output = self.trans2(x)
+        #output = self.sig(x)
          
         #output = self.sig(x)
         return output, x    # return x for visualization
