@@ -5,7 +5,7 @@ from dataLoader import CustomDataset
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.nn import MSELoss, CrossEntropyLoss
+from torch.nn import MSELoss, CrossEntropyLoss, L1Loss
 from torch.optim import SGD
 import os
 
@@ -13,7 +13,7 @@ import os
 
 BATCH = 16
 EPOCH = 100
-LR = 1e-5
+LR = 1e-3
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print("[INFO] training using {}...".format(DEVICE))
 
@@ -21,7 +21,7 @@ print("[INFO] training using {}...".format(DEVICE))
 dataset = CustomDataset()
 data_loader = DataLoader(dataset, batch_size=BATCH, shuffle=True)
 
-ae = model.SimplerAE().to(DEVICE)
+ae = model.SimplerAE2().to(DEVICE)
 
 model_parameters = filter(lambda p: p.requires_grad, ae.parameters())
 params = sum([np.prod(p.size()) for p in model_parameters])
@@ -45,10 +45,7 @@ for i in range(EPOCH):
     stop = True
     count = 0
     for batch_id, (X,y) in enumerate(data_loader):
-        Ximg = X[0].numpy()
-        yimg = y[0].numpy()
 
-        #breakpoint()
         X = X.float()
         y = y.float()
         (X,y) = (X.to(DEVICE), y.to(DEVICE))
@@ -57,25 +54,38 @@ for i in range(EPOCH):
 
         count+=1
         if count%20==0:
-            ex,_ = ae(Xmple)
-
-            npim1 = (y[0].detach().transpose(0,2).numpy()).astype(np.uint8)
-            npim2 = (predictions[0].detach().transpose(0,2).numpy()).astype(np.uint8)
-            npim3 = (ymple[0].detach().transpose(0,2).numpy()).astype(np.uint8)
-            npim4 = (ex[0].detach().transpose(0,2).numpy()).astype(np.uint8)
             
-            cv.imshow("imm", np.hstack([npim1,npim2,npim3,npim4]))
+            Ximg, _ = dataset.denormalize(X[0].detach().transpose(0,2).numpy(),None)
+            pred, yimg = dataset.denormalize(predictions[0].detach().transpose(0,2).numpy(),y[0].detach().transpose(0,2).numpy())
+            
+            Ximg = Ximg.astype(np.uint8)
+            Ximg = cv.resize(Ximg, yimg.shape[:2])
+            Ximg = cv.cvtColor(Ximg,cv.COLOR_GRAY2BGR)
+            yimg = yimg.astype(np.uint8)
+            pred = pred.astype(np.uint8)
+
+            # ex,_ = ae(Xmple)
+            # Ximg2, _ = dataset.denormalize(Xmple[0].detach().transpose(0,2).numpy(),None)
+            # pred2, yimg2 = dataset.denormalize(ex[0].detach().transpose(0,2).numpy(),y[0].detach().transpose(0,2).numpy())
+            
+            # Ximg2 = Ximg2.astype(np.uint8)
+            # Ximg2 = cv.resize(Ximg2, yimg2.shape[:2])
+            # Ximg2 = cv.cvtColor(Ximg2,cv.COLOR_GRAY2BGR)
+            # yimg2 = yimg2.astype(np.uint8)
+
+            #cv.imshow("imm", np.vstack([np.hstack([Ximg,yimg,pred]),np.hstack([Ximg2,yimg2,pred2])]))
+            cv.imshow("imm", np.hstack([Ximg,yimg,pred]))
+            #cv.imshow("imm3", np.hstack([Ximg2,yimg2,pred2]))
+
             print("LOSS: ", round(loss.item()/BATCH,4))
             cv.waitKey(1)
 
-            #breakpoint()
-        #breakpoint()
         loss = lossFunc(predictions, y)
         
         opt.zero_grad()
         loss.backward()
         opt.step()
-        if stop:
+        if count%100==0 and stop:
             #get_info(predictions,label)
             #breakpoint()
             stop = False
