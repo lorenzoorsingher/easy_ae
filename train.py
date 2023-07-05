@@ -5,7 +5,6 @@ from dataLoader import CustomDataset
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.nn import MSELoss, CrossEntropyLoss, L1Loss
 from torch.optim import SGD
 import os
 from copy import copy
@@ -19,8 +18,11 @@ LR = 1e-3
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print("[INFO] training using {}...".format(DEVICE))
 
+
 current_savepath = SAVE_PATH + "run_"+str(round(time.time()))+"/"
+img_savepath = current_savepath + "imgs/"
 os.mkdir(current_savepath)
+os.mkdir(img_savepath)
 
 dataset = CustomDataset()
 data_loader = DataLoader(dataset, batch_size=BATCH, shuffle=True)
@@ -79,6 +81,7 @@ for i in range(EPOCH):
             ex_pred = ex_pred.astype(np.uint8)
 
             cv.imshow("imm", np.vstack([np.hstack([Ximg,yimg,pred]),np.hstack([ex_Ximg,ex_yimg,ex_pred])]))
+            cv.imwrite(img_savepath+"img_"+str(i)+"_"+str(count)+".jpg",np.hstack([ex_Ximg,ex_yimg,ex_pred]))
             #print("LOSS: ", round((loss.item()*BATCH)/VISUAL,4))
             cv.waitKey(1)
 
